@@ -1,8 +1,8 @@
 import json
 import math
-partone = True
-# infile = './input'
-infile = './example'
+partone = False
+infile = './input'
+# infile = './example'
 
 
 def factors(x):
@@ -11,13 +11,10 @@ def factors(x):
 
 def parse_operation(operation):
     operation = operation.replace('Operation: new = old ', '')
-    if operation == '* old':
-        return lambda old: old
     return lambda old: eval(f"{old} {operation}")
 
 
 assert parse_operation('Operation: new = old * 3')(3) == 9
-assert parse_operation('Operation: new = old * old')(3) == 3
 
 
 def parse_test(test, if_true, if_false):
@@ -42,6 +39,7 @@ def parse_input_chunk(chunk):
         'items': [int(x) for x in item_line.split(': ')[1].split(', ')],
         'operation': parse_operation(op_line),
         'test': parse_test(test_line, if_true, if_false),
+        'modulo': int(test_line.split('by ')[1]),
         'tally': 0
     })
 
@@ -63,8 +61,9 @@ with open(infile, 'r') as f:
     chunks = f.read().split('\n\n')
     monkeys = dict([parse_input_chunk(chunk) for chunk in chunks])
 
+maxworry = math.prod([m['modulo'] for _, m in monkeys.items()])
+
 for round in range(20 if partone else 10000):
-    print('starting round', round)
     for n, stuff in monkeys.items():
         while stuff['items']:
             stuff['tally'] += 1
@@ -72,6 +71,7 @@ for round in range(20 if partone else 10000):
             item = stuff['operation'](item)
             if partone:
                 item = item // 3
+            item = item % maxworry
             target = stuff['test'](item)
             monkeys[target]['items'].append(item)
 
